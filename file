@@ -1,0 +1,222 @@
+import { SgDatePicker } from '@sg-bootstrap/components/dist/react-library/src/components';
+import { useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
+import { CAFictifTreeview } from '../../../components/common/caFictifTreeview/CAFictifTreeview';
+import { CustomIcon } from '../../../components/common/customIcon/CustomIcon';
+import { CAFictifServiceLevel, CAFictifTreeviewData } from '../../../customTypes/CAFictifTreeViewData';
+import { TranslationKeys } from '../../../locales/constants';
+import { CAFictiftEntities } from '../../../models/common/CAFictifEntities';
+import { dateFormat } from '../../../utils/date.utils';
+import styles from './CaFictifs.module.scss';
+
+export const CaFictifs = () => {
+  const caFictifInitialState: CAFictifModalState = {
+    selectedEntity: null,
+    showLoader: true,
+    entitiesTreeData: null,
+  };
+
+  const intl = useIntl();
+
+  const [caFictifModalState, setCaFictifModalState] = useState<CAFictifModalState>({
+    ...caFictifInitialState,
+    selectedEntity: {
+      id: '',
+      text: '',
+      serviceId: '',
+      service: '',
+      denomination: '',
+      startDate: null,
+      endDate: null,
+      serviceLevel: CAFictifServiceLevel.N0,
+      items: [],
+    },
+  });
+
+  useEffect(() => {
+    console.log('selected changed', caFictifModalState.selectedEntity);
+  }, [caFictifModalState.selectedEntity]);
+
+  const translateLanguageText = (key: TranslationKeys) => {
+    return intl.formatMessage({ id: key });
+  };
+
+  const handleTreeItemClick = (item: CAFictifTreeviewData) => {
+    setCaFictifModalState((prevState) => ({
+      ...prevState,
+      selectedEntity: item,
+    }));
+  };
+
+  const handleTreeLoaded = (level5: CAFictiftEntities[]) => {
+    const defaultEntity = level5[0];
+
+    setCaFictifModalState({
+      ...caFictifModalState,
+      selectedEntity: {
+        id: defaultEntity.serviceLevel,
+        text: defaultEntity.entity,
+        serviceId: defaultEntity.serviceId,
+        service: defaultEntity.entity,
+        denomination: defaultEntity.denomination,
+        startDate: defaultEntity.startDate,
+        endDate: defaultEntity.endDate,
+        serviceLevel: defaultEntity.level,
+        items: [],
+      },
+      entitiesTreeData: level5,
+    });
+  };
+
+  const onDateChanged = (event: any) => {
+    const selectdDate = event.detail.date;
+    setCaFictifModalState((prevState) => ({
+      ...prevState,
+      selectedEntity: selectdDate,
+    }));
+  };
+
+  const updateTaskDate = (e: CustomEvent) => {
+    caFictifModalState.selectedEntity.startDate = e.detail.date;
+  };
+
+  return (
+    <div className={`container-fluid ${styles.popupHeight}`}>
+      <h3 className={` col-12 mb-3 ${styles.title}`}>{translateLanguageText(TranslationKeys.CA_FICTIFS)}</h3>
+      <div className="row">
+        <div className={`col-12 col-lg-5 ${styles.leftContainer}`}>
+          <CAFictifTreeview
+            fifthLevelServices={caFictifInitialState.entitiesTreeData}
+            treeviewId="caFictifTree"
+            visible={true}
+            addBaseNode={true}
+            selectedCaFictif={caFictifInitialState.selectedEntity}
+            onTreeItemClick={handleTreeItemClick}
+            onTreeLoaded={handleTreeLoaded}
+          />
+        </div>
+        <div className={`col-12 col-lg-6 ${styles.rightContainer}`}>
+          <h3 className="md-4">CA de niveau {caFictifModalState.selectedEntity?.serviceLevel}</h3>
+          <div className="col-md-12">
+            <div className="one common  mb-3">
+              <label htmlFor="serviceId" className="form-label">
+                {translateLanguageText(TranslationKeys.CA_FICTIC_ITEMS_IDENTIFIANT_TEXT)}
+              </label>
+              <input
+                type="text"
+                className="form-control bg-white"
+                id="serviceId"
+                value={caFictifModalState.selectedEntity?.serviceId ?? ''}
+                readOnly
+                placeholder="Identifiant du service"
+              />
+            </div>
+          </div>
+          <div className="col-md-12">
+            <div className="form-group mb-3">
+              <label htmlFor="serviceCode" className="form-label">
+                {translateLanguageText(TranslationKeys.CA_FICTIC_ITEMS_CODE_MNEMONIC_TEXT)}
+              </label>
+              <input
+                type="text"
+                className="form-control bg-white"
+                id="serviceCode"
+                value={caFictifModalState.selectedEntity?.service ?? ''}
+                readOnly
+                placeholder="Nom du service"
+              />
+            </div>
+          </div>
+          <div className="col-md-12">
+            <div className="form-group mb-4">
+              <label htmlFor="denomination" className="form-label">
+                {translateLanguageText(TranslationKeys.CA_FICTIC_ITEMS_DENOMINATION_TEXT)}
+              </label>
+              <input
+                type="text"
+                className="form-control bg-white"
+                id="denomination"
+                value={caFictifModalState.selectedEntity?.denomination ?? ''}
+                readOnly
+                placeholder="Nom du service"
+              />
+            </div>
+          </div>
+          <div className="row ">
+            <div className="col-md-6">
+              <label htmlFor="startDate" className="form-label">
+                {translateLanguageText(TranslationKeys.CA_FICTIC_ITEMS_DATE_DEBUT_TEXT)}
+              </label>
+              <SgDatePicker
+                id="startDate"
+                value={
+                  caFictifModalState.selectedEntity?.startDate
+                    ? new Date(caFictifModalState.selectedEntity.startDate).getTime()
+                    : null
+                }
+                placeholder="Date de début"
+                format={dateFormat}
+                displayFormat={dateFormat}
+                onDateSelected={(e) => updateTaskDate(e)}
+              />
+            </div>
+            <div className="col-md-6">
+              <label htmlFor="endDate" className="form-label">
+                {translateLanguageText(TranslationKeys.CA_FICTIC_ITEMS_DATE_FIN_TEXT)}
+              </label>
+              <SgDatePicker
+                id="endDate"
+                value={
+                  caFictifModalState.selectedEntity?.endDate
+                    ? new Date(caFictifModalState.selectedEntity.endDate).getTime()
+                    : null
+                }
+                placeholder="Date de fin"
+                format={dateFormat}
+                displayFormat={dateFormat}
+                onDateSelected={(e) => updateTaskDate(e)}
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="d-flex flex-wrap gap-4 sm-4 justify-content-center align-items-center">
+              <button
+                className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2"
+                style={{ minWidth: '285px', height: '32px' }}
+                aria-label="modifier"
+                onClick={undefined}
+              >
+                <CustomIcon customStyles="ml-3" iconName="edit" iconSize="sm"></CustomIcon>
+                {translateLanguageText(TranslationKeys.CA_FICTIC_MODIFY_CA_BUTTON_TEXT)}
+              </button>
+              {caFictifModalState.selectedEntity?.serviceLevel !== CAFictifServiceLevel.N0 && (
+                <button
+                  className="btn btn-dark d-flex align-items-center justify-content-center gap-3"
+                  style={{ minWidth: '285px', height: '32px' }}
+                  aria-label="add_ca_fictif_btn"
+                  onClick={undefined}
+                >
+                  <CustomIcon customStyles="ml-3" iconName="add" iconSize="sm"></CustomIcon>
+                  {translateLanguageText(TranslationKeys.CA_FICTIC_ADD_CA_BUTTON_TEXT)}
+                  {''}
+                  {String(Number(caFictifModalState.selectedEntity?.serviceLevel ?? '05') - 1).padStart(2, '0')}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface CAFictifModalState {
+  selectedEntity: CAFictifTreeviewData;
+  showLoader: boolean;
+  entitiesTreeData: CAFictiftEntities[];
+}
+
+export interface EntitySelectionProps {
+  onEntitySelection: Function;
+  serviceLevelSelection: CAFictifServiceLevel;
+}
